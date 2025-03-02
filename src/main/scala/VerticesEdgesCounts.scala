@@ -23,18 +23,29 @@ object VerticesEdgesCounts {
     * @param spark the SparkSession. Note that it is provided for convenience, you might not
     *              need it if you use the RDD API.
     * @param sc the SparkContext. Note that it is provided for convenience, you might not
-    * *         need it if you use the DataFrame API.
-    * @return the result of calling VerticesEdgesCounts#countsToString with the vertices and nodes
-    *         count.
+    *           need it if you use the DataFrame API.
+    * @return the result of calling VerticesEdgesCounts#countsToString with the vertices and nodes count.
     */
   def verticesAndNodesCount(inputPath: String, spark: SparkSession, sc: SparkContext): String = {
-    // TODO: copy your code from the notebook here.
-    // TODO: replace with the actual values. You should not hardcode them as the grader tests the
-    //  function on a secret dataset.
-    val edges = 0L
-    val vertices = 0L
-
-    countsToString(vertices, edges)
+    // Load the graph data from the input path using SparkContext
+    val graphRDD = sc.textFile(inputPath)
+    
+    // Process each line: split by whitespace, filter out lines with less than two tokens,
+    // and then create a tuple representing an edge (source, destination)
+    val edges = graphRDD
+      .map(line => line.split("\\s+"))
+      .filter(arr => arr.length >= 2)
+      .map(arr => (arr(0), arr(1)))
+    
+    // Count distinct edges
+    val distinctEdgesCount = edges.distinct().count()
+    
+    // Get distinct vertices from both the source and destination of each edge
+    val vertices = edges.flatMap { case (src, dst) => Seq(src, dst) }
+    val distinctVerticesCount = vertices.distinct().count()
+    
+    // Return the result as a formatted string
+    countsToString(distinctVerticesCount, distinctEdgesCount)
   }
 
   /**
@@ -68,5 +79,4 @@ object VerticesEdgesCounts {
    */
   def saveToFile(outputString: String, outputPath: String): Unit =
     Files.write(Paths.get(outputPath), outputString.getBytes(StandardCharsets.UTF_8))
-
 }
