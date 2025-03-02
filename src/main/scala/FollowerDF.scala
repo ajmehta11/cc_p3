@@ -1,4 +1,5 @@
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
 
 object FollowerDF {
 
@@ -16,8 +17,22 @@ object FollowerDF {
     * @param spark the spark session.
     */
   def computeFollowerCountDF(inputPath: String, outputPath: String, spark: SparkSession): Unit = {
-    // TODO: Calculate the follower count for each user
-    // TODO: Write the top 100 users to the above outputPath in parquet format
+    // Read the input file as a DataFrame. Each line will be stored in a column named "value".
+    val df = spark.read.text(inputPath)
+
+    // Split each line on whitespace. The resulting array is stored in a new column "tokens".
+    // Assuming each line is "follower followee", we extract the second token as the "followee".
+    val splitDF = df.withColumn("tokens", split(col("value"), "\\s+"))
+                    .withColumn("followee", col("tokens").getItem(1))
+
+    // Group by the "followee" column and count the occurrences (i.e., the number of followers)
+    val followersCountDF = splitDF.groupBy("followee").count()
+
+    // Sort the results by follower count in descending order and limit to the top 100 users.
+    val top100DF = followersCountDF.orderBy(desc("count")).limit(100)
+
+    // Write the top 100 results as a Parquet file to the output path.
+    top100DF.write.parquet(outputPath)
   }
 
   /**
@@ -31,5 +46,4 @@ object FollowerDF {
 
     computeFollowerCountDF(inputGraph, followerDFOutputPath, spark)
   }
-
 }
