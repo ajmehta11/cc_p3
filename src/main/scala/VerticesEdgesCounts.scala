@@ -32,12 +32,12 @@ object VerticesEdgesCounts {
     // TODO: replace with the actual values. You should not hardcode them as the grader tests the
     //  function on a secret dataset.
     val graphRDD = sc.textFile(inputPath)
-    val edges = graphRDD.map(.split("\\s+")).filter(.length >= 2).map(arr => (arr(0), arr(1)))
-    val distinctEdgesCount = edges.distinct().count()
-    val vertices = edges.flatMap { case (src, dst) => Seq(src, dst) }
-    val distinctVerticesCount = vertices.distinct().count()
+    val edges_graph = graphRDD.map(.split("\\s+")).filter(.length >= 2).map(arr => (arr(0), arr(1)))
+    val edges = edges.distinct().count()
+    val vertices_graph = edges.flatMap { case (src, dst) => Seq(src, dst) }
+    val vertices = vertices.distinct().count()
 
-    countsToString(distinctVerticesCount, distinctEdgesCount)
+    countsToString(vertices, edges)
   }
 
   /**
